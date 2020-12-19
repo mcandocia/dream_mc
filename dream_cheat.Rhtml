@@ -1,0 +1,360 @@
+<div id="authors_note" style="background-color:#FEDDDD;color:#FD6666;padding:4px;margin:4px"><i>Author's Note: I do not condone cheating for speedruns. This article is meant to highlight a method one might use to try to determine how much cheating they can get away with, known in statistics as <a href="https://en.wikipedia.org/wiki/Power_of_a_test" style="color:#EC3333" target="_blank" id="wiki_power_test_out">calculating the power of a test</a>. Cheating can only give a slight edge if undetectable, and if done over a long enoug period, can result in an individual getting caught.</i></div>
+
+<p> Recently, famous YouTube streamer <a href="https://www.youtube.com/channel/UCTkXRDQl0luXxVQrRQvWS6w" id="yt_channel_dream_out" target="_blank">Dream</a> <a href="https://www.polygon.com/2020/12/15/22176341/minecraft-youtube-dream-speedrun-cheating-mod-world-record-piglin" id="polygon_dream_cheating_out" target="_blank">has been accused of cheating<a/> in recent Minecraft speedruns that allowed him to clinch a recent world record. You can see the Minecraft Speedrunning Team's <a href="https://mcspeedrun.com/dream.pdf" target="_blank" id="minecraft_speedrun_team_dream_doc_out">detailed analysis here</a>. </p>
+
+<p> Essentially, there are two essential, but semi-rare, items that speedrunners need to collect in the game in order to win: green pearls called "Ender Pearls" and fiery sticks called "Blaze Rods". There are multiple ways of obtaining the former, the fastest of which involves trading gold ingots to non-player characters called "Piglins". The latter has a 50% chance of being dropped from a specific enemy when killed. Because these items are necessary to win the game, any way of obtaining them faster will lead to faster times on speedruns.</p>
+
+<p> In his most recent runs, Dream had a significantly higher-than-expected rate of receiving both of them. For the pearls, he received 42 from 262 trades, or about 15%, vs. the expected 4.7% as coded into the unmodified game. Likewise, he received 211 blaze rods out of 305 enemies, or 69%, versus an expected 50%. No other player had nearly that much luck.</p>
+
+<!--begin.rcode player_comparisons, echo=FALSE, warning=FALSE, message=FALSE
+library(tidyverse)
+rods_df = read_csv('rods.csv') %>%
+  group_by(
+    Player
+  ) %>%
+  mutate(
+    `Cumulative Blazes Killed` = cumsum(`Blazes killed`),
+    `Cumulative Blaze Rod Drops` = cumsum(`Blaze rod drops`)
+  )
+
+pearls_df = read_csv('pearls.csv') %>%
+  group_by(Player) %>%
+  mutate(
+    `Cumulative Ingots Traded` = cumsum(`Ingots traded`),
+    `Cumulative Pearl Trades` = cumsum(`Pearl trades`)
+  )
+
+if (FALSE){
+  max_rods_model = lm(`Cumulative Blaze Rod Drops` ~ 0+`Cumulative Blazes Killed`,
+                      data=rods_df %>% 
+                        filter(Player != 'Dream') %>%
+                        group_by(Player) %>% 
+                        filter(`Cumulative Blazes Killed` == max(`Cumulative Blazes Killed`))
+                      )
+  
+  max_pearls_model = lm(`Cumulative Pearl Trades` ~ 0 + `Cumulative Ingots Traded`,
+                      data=pearls_df %>% 
+                        filter(Player != 'Dream') %>%
+                        group_by(Player) %>% 
+                        filter(`Cumulative Ingots Traded` == max(`Cumulative Ingots Traded`))
+                      )
+}
+
+pearls_plt = ggplot(pearls_df, 
+                  aes(x=`Cumulative Ingots Traded`, y=`Cumulative Pearl Trades`, color=Player)
+                  ) + 
+  geom_line() + 
+  theme_bw(base_size=16) + 
+  geom_abline(slope=0.047, intercept=0, lty='dashed')+ 
+  theme(legend.position='right') +
+  ggtitle('Ingots Traded vs. Pearls Recieved by Speedrunner',
+          subtitle='dashed line indicates expected value')+ 
+  scale_color_discrete('')
+
+rods_plt = ggplot(rods_df) + 
+  geom_line(aes(x=`Cumulative Blazes Killed`, y = `Cumulative Blaze Rod Drops`, color=Player)) +
+  theme_bw(base_size=16) + 
+  geom_abline(slope=0.50, intercept=0, lty='dashed') + 
+  theme(legend.position='right') +
+  ggtitle('Blazes Killed vs. Blaze Rods Received by Speedrunner',
+          subtitle='dashed line indicates expected value') + 
+  scale_color_discrete('')
+
+gridExtra::grid.arrange(
+  pearls_plt, rods_plt,
+  nrow=2
+)
+end.rcode-->
+
+<p> In the above charts, you can see at a glance how Dream's &#8220;luck&#8221; was significantly higher than other top speedrunners over the course of several streams. </p>
+
+<p> In the analysis that the Minecraft Speedrunning Team provided, even the most charitable method of analyzing it put the p-value of this happening to <i>any</i> streamers at less than 1 in a million after taking into account different factors. The actual chances of Dream achieving such a run (or better) are much, much smaller, at about 1 in 7.5 <i>trillion</i>.</p>
+
+<h1> How far can the envelope be pushed? </h1>
+
+<p> Of course, had Dream not chosen to increase those drops to noticeably higher rates across the above 6 runs, how much could he have modified the game in his favor to plausibly generate "good luck" "by chance"? Here are a few general strategies:</p>
+
+<ol id="strategies">
+ <li> The simplest method would be to reduce the drop rates to something more reasonable. </li>
+ <li> He could have modified the drop rates in his favor only during some runs </li>
+ <li> Using a more reasonable drop rate only during some of the runs (i.e., combine both of the above)</li>
+</ol>
+
+<p> Additionally, if any single run is &#8220;too lucky&#8221;, unmodified, or even less-favorable probability runs could follow it to balance numbers out. This relies on the fact that the <i>best</i> run is likely to be even better when &#8220;luck&#8221; is redistributed from one set of runs to another. For example, if you set the blaze rod drop rate to 20% in one run, and 90% in the next, then the </p>
+
+<p> Simply reducing the rate makes it more reasonable, while modifying the rate in only some of the runs is very effective at masking the effect, especially if there are a larger number of unmodified runs. It doesn't solve the issue completely, and it slows down the process of gaming the system.</p>
+
+<p> It should also be noted that in most runs, 0-2 of the Ender Pearls obtained are done so through trading, usually, since it has a low probability to begin with, so boosting that rate is more difficult to do clandestinely <i>unless</i> it is done sparsely. For blaze rods, 7-8 are an ideal number to obtain in order to complete the game.</p>
+
+<h2> Optimal Values </h2>
+
+<p>At the time of writing, the <a href="https://www.speedrun.com/mc" target="_blank" id="minecraft_speedrun_current_leaderboard_out">current world record</a> is at 14:39, with second and third being about 30 and 70 seconds behind that time. </p>
+
+<p> Below, we can take a look at the different <i>p-values</i> across different probabilities for different numbers of runs and numbers of runs with unmodified probabilities. To be charitable, as in the official analysis, we will use a factor of 1,000 on the <i>p-value</i> to multiply by the number of speedrunners. We will ideally aim for a <i>p-value</i> of 0.05, but anything greater than 0.01 is remotely plausible.</p>
+
+<p> For Ender Pearls, let's assume that an average of 15 golden bars are traded per game in an attempt to recieve them. For blaze rods, let's set a goal of 7 blaze rods acquired per game. Below is how frequently one could expect to evade detection over the course of 22 games with rigged RNG, using a p-value of 0.05 and a "correction" factor of 1,000, to account for the estimated number of speedrunners. The first graph considers the 22 games alone, and the second considers the games combined with 10 non-rigged games.</p>
+
+<!--note that in the below code, with the negative binomial distribution, the extra 7 "successes" are not included, but this does not affect the p-value or any other resulting statistics-->
+<!--begin.rcode calculations, echo=FALSE, message=FALSE, warning=FALSE, cache=TRUE
+set.seed(2020 * 12 * 18 - 1337)
+prob_grid = expand.grid(
+  ender_pearl=seq(0.047,0.152,0.0025),
+  blaze_rod=seq(0.5,0.75,0.01)
+)
+
+BLAZE_ROD_BASE_PROB = 0.5
+ENDER_PEARL_BASE_PROB = 0.047
+
+calculate_pval <- function(
+  data, 
+  n_games, 
+  n_normal_games=0, 
+  n_iter=1000, 
+  pval_threshold=0.05, 
+  charitability_factor=1000,
+  verbose=FALSE
+){
+  n_rigged = n_games - n_normal_games
+  result_list = list()
+  for (i in 1:nrow(data)){
+    if (verbose){
+      print(paste(i,'/',nrow(data)))
+    }
+    prob_pearl = data[i,1]
+    prob_blaze = data[i,2]
+    
+    # normal
+    normal_blaze = matrix(rnbinom(n_iter * n_normal_games, 7, BLAZE_ROD_BASE_PROB), nrow=n_iter)
+    normal_pearl = matrix(rbinom(n_iter * n_normal_games, 15, ENDER_PEARL_BASE_PROB))
+    
+    # rigged
+    rigged_blaze = matrix(rnbinom(n_iter * n_rigged, 7, prob_blaze), nrow=n_iter)
+    rigged_pearl = matrix(rbinom(n_iter * n_rigged, 15, prob_pearl), nrow=n_iter)
+    
+    # combined (both NB and B are additive)
+    if (n_normal_games > 0){
+      overall_blaze = rowSums(normal_blaze) + rowSums(rigged_blaze)
+      overall_pearl = rowSums(normal_pearl) + rowSums(rigged_pearl)
+    } else {
+      overall_blaze = rowSums(rigged_blaze)
+      overall_pearl = rowSums(rigged_pearl)      
+    }
+    
+    pval_blaze = pnbinom( overall_blaze, 7 * n_games, BLAZE_ROD_BASE_PROB)
+    pval_pearls = pbinom(overall_pearl, 15 * n_games, ENDER_PEARL_BASE_PROB, lower.tail=FALSE)
+    
+    combined_pvals = sapply(
+      1:n_iter, 
+      function(x) BisRNA::fisher.method(
+        c(pval_blaze[x], pval_pearls[x]))
+      ) * charitability_factor
+    
+    rejection_rate = mean(combined_pvals > pval_threshold)
+    result_list[[i]] = rejection_rate                    
+  }
+  return(bind_cols(data, unlist(result_list) )%>%
+                     rename(undetected_rate=3)
+  )
+}
+
+pvals = calculate_pval(prob_grid, verbose=FALSE, n_games=22, n_iter=2500) 
+
+pvals_w_normal = calculate_pval(prob_grid, verbose=FALSE, n_games=32, n_normal_games=10, n_iter=2500) 
+
+
+pvals_c20 = calculate_pval(prob_grid, verbose=FALSE, n_games=22, n_iter=2500, charitability_factor=20) 
+
+pvals_w_normal_c20 = calculate_pval(prob_grid, verbose=FALSE, n_games=32, n_normal_games=10, n_iter=2500, charitability_factor=20) 
+
+end.rcode-->
+
+<!--begin.rcode calculations_long, echo=FALSE, warning=FALSE, message=FALSE, cache=TRUE
+ pvals_long = calculate_pval(prob_grid, verbose=FALSE, n_games=200, n_iter=2500) 
+# update
+
+ pvals_w_normal_long = calculate_pval(prob_grid, verbose=FALSE, n_games=210, n_normal_games=10, n_iter=2500) 
+ 
+ pvals_w_normal_vlong = calculate_pval(prob_grid, verbose=FALSE, n_games=200, n_normal_games=100, n_iter=2500) 
+ 
+ pvals_w_normal_vvlong = calculate_pval(prob_grid, verbose=FALSE, n_games=400, n_normal_games=200, n_iter=2500) 
+end.rcode-->
+
+<!--begin.rcode cheat_evasion_p1_1, echo=FALSE, warning=FALSE, message=FALSE, fig.width=8, fig.height=8.5
+print(
+ggplot(pvals) + 
+  geom_tile(aes(x=ender_pearl, y=blaze_rod, fill=undetected_rate)) + 
+  scale_fill_gradientn('Undetected Rate', colors=cetcolor::cet_pal(7, 'inferno') %>% rev(), label=scales::percent) + 
+  xlab('Ender Pearl Trade Probability') + 
+  ylab('Blaze Rod Drop Probability') +
+  scale_y_continuous(label=scales::percent, breaks = seq(0.5,0.75,0.05)) +
+  scale_x_continuous(label=scales::percent) +
+  ggtitle('Probability of evading cheat detection with \n\nmodified Minecraft probabilities', subtitle='22 games \n1000x speedrunner correction \np-val = 0.05\ngoal = 7 blaze rods, 15 pearl trade attempts')+
+  theme_bw(base_size=16)
+  )
+
+end.rcode-->
+
+<p> As we can see, pearl drop rates over 7.5% and blaze rod rates of above 60% are likely to be detected over the course of over 20 games. When combined at those levels, though, there's about a 50% chance of crossing the pre-determined threshold.</p>
+
+<!--begin.rcode cheat_evasion_p1_2, echo=FALSE, warning=FALSE, message=FALSE, fig.width=8, fig.height=8.5
+
+print(
+ggplot(pvals_w_normal) + 
+  geom_tile(aes(x=ender_pearl, y=blaze_rod, fill=undetected_rate)) + 
+  scale_fill_gradientn('Undetected Rate', colors=cetcolor::cet_pal(7, 'inferno') %>% rev(), label=scales::percent)  + 
+  xlab('Ender Pearl Trade Probability') + 
+  ylab('Blaze Rod Drop Probability') +
+  scale_y_continuous(label=scales::percent, breaks = seq(0.5,0.75,0.05)) +
+  scale_x_continuous(label=scales::percent) +
+  ggtitle('Probability of evading cheat detection with \nmodified Minecraft probabilities', subtitle='32 games, 10 unmodified \n1000x speedrunner correction \np-val = 0.05\ngoal = 7 blaze rods, 15 pearl trade attempts') +
+  theme_bw(base_size=16)
+  )
+end.rcode-->
+
+
+
+<p> If 10 unmodified games are interspersed, though, those numbers are relatively safe, and a blaze rod/ender pearl trade probability of 55%/10% could probably be pushed, provided that the rigged and unrigged runs are not all grouped together. </p>
+
+<p> What happens if a less-charitable approach is taken, and only the top 20 speedrunners are considered?</p>
+
+<!--begin.rcode cheat_evasion_p2_1, echo=FALSE, warning=FALSE, message=FALSE, fig.width=8, fig.height=8.5
+# C20
+ggplot(pvals_c20) + 
+  geom_tile(aes(x=ender_pearl, y=blaze_rod, fill=undetected_rate)) + 
+  scale_fill_gradientn('Undetected Rate', colors=cetcolor::cet_pal(7, 'inferno') %>% rev(), label=scales::percent) + 
+  xlab('Ender Pearl Trade Probability') + 
+  ylab('Blaze Rod Drop Probability') +
+  scale_y_continuous(label=scales::percent, breaks = seq(0.5,0.75,0.05)) +
+  scale_x_continuous(label=scales::percent) +
+  ggtitle('Probability of evading cheat detection with \nmodified Minecraft probabilities', subtitle='22 games \n20x speedrunner correction \np-val = 0.05\ngoal = 7 blaze rods, 15 pearl trade attempts')+
+  theme_bw(base_size=16)
+end.rcode-->
+
+<p>  Without any normal games, there is little wiggle room for changing the parameters too much.</p>
+
+
+<!--begin.rcode cheat_evasion_p2_2, echo=FALSE, warning=FALSE, message=FALSE, fig.width=8, fig.height=8.5
+ggplot(pvals_w_normal_c20) + 
+  geom_tile(aes(x=ender_pearl, y=blaze_rod, fill=undetected_rate)) + 
+  scale_fill_gradientn('Undetected Rate', colors=cetcolor::cet_pal(7, 'inferno') %>% rev(), label=scales::percent)  + 
+  xlab('Ender Pearl Trade Probability') + 
+  ylab('Blaze Rod Drop Probability') +
+  scale_y_continuous(label=scales::percent, breaks = seq(0.5,0.75,0.05)) +
+  scale_x_continuous(label=scales::percent) +
+  ggtitle('Probability of evading cheat detection with \nmodified Minecraft probabilities', subtitle='32 games, 10 unmodified \n20x speedrunner correction \np-val = 0.05\ngoal = 7 blaze rods, 15 pearl trade attempts')+
+  theme_bw(base_size=16)
+end.rcode-->
+
+
+<p>The profile of the 22 rigged + 10 normal games looks similar to the profile with a 1,000 correction, and while some of the luck might not be enough to get results thrown out, it would definitely gather unwanted scrutiny, making future attempts more difficult to pass. </p>
+
+<h1> Statistical Methodology </h1>
+
+<p> I used various simulations of number of pearls earned in a run based on the modified probability, as well as the number of blazes needed to be killed to reach 7 rods. For the pearls, I used a simple <a href="https://en.wikipedia.org/wiki/Binomial_distribution" target="_blank" id="wiki_binomial_distribution_out">binomial distribution</a>, which describes how many successes there are after a certain number of events, like weighted coin flips. For blazes that need to be killed, I used a <a href="https://en.wikipedia.org/wiki/Negative_binomial_distribution" id="wiki_neg_binom_out" target="_blank">negative binomial distribution</a>, which describes how many failures are encountered before a certain number of successes are achieved (or vice-versa).</p>
+
+
+
+
+<!--begin.rcode expected_distros_pearl, echo=FALSE, warning=FALSE, message=FALSE, fig.width=7, fig.height=7
+ender_pearl_vals = 0:15
+ender_pearl_probs = dbinom(ender_pearl_vals, 15, 0.047)
+ender_pearl_sus_probs = dbinom(ender_pearl_vals, 15, 0.15)
+epdf = tibble(
+  ender_pearl_vals = ender_pearl_vals, 
+  `Unmodified Distribution`=ender_pearl_probs, 
+  `Estimated Dream Distribution` = ender_pearl_sus_probs
+) %>% reshape2::melt(id.var='ender_pearl_vals')
+
+ggplot(epdf) +
+  geom_bar(aes(x=ender_pearl_vals, y=value, fill=variable), stat='identity', position='dodge') + 
+  scale_y_continuous(labels=scales::percent) + 
+  facet_grid(variable~.) +
+  theme_bw() +
+  xlab('# of ender pearls from trades') + 
+  ggtitle('Distribution of Ender Pearl Trades from Single Game', 
+          subtitle='Assuming 15 gold ingots traded')+
+  theme_bw(base_size=14) +
+  theme(legend.position='bottom') +
+  ylab('Probability') +
+  scale_fill_manual('', values=c('#C29A33','#41FF81'))
+end.rcode-->
+
+<p> Note that the blaze distribution chart below is a negative binomial distribution, shifted to the right by 7, representing the total successes (blaze rod drops) <i>and</i> failures (no drop), and not just the failures.</p>
+
+<!--begin.rcode expected_distros_blaze, echo=FALSE, warning=FALSE, message=FALSE, fig.width=7, fig.height=7
+blaze_vals = 0:25
+blaze_probs = dnbinom(blaze_vals, 7, 0.5)
+blaze_sus_probs = dnbinom(blaze_vals, 7, 0.70)
+bpdf = tibble(
+  blaze_vals = blaze_vals, 
+  `Unmodified Distribution`=blaze_probs, 
+  `Estimated Dream Distribution` = blaze_sus_probs
+) %>% reshape2::melt(id.var='blaze_vals')
+
+ggplot(bpdf) +
+  geom_bar(aes(x=blaze_vals + 7, y=value, fill=variable), stat='identity', position='dodge') + 
+  scale_y_continuous(labels=scales::percent) + 
+  facet_grid(variable~.) +
+  theme_bw() +
+  xlab('# of blazes killed') + 
+  ggtitle('Distribution of Blazes Killed from Single Game', 
+          subtitle='Assuming 7 blaze rods needed')+
+  theme_bw(base_size=14) +
+  scale_fill_manual('', values=c('#C29A33','#41FF81')) +
+  theme(legend.position='bottom') +
+  ylab('Probability')  +
+  scale_x_continuous(breaks=seq(0,40,2))
+
+end.rcode-->
+
+<p> For each simulation, 2 <a href="https://en.wikipedia.org/wiki/P-value" target="_blank" id="wiki_pvalue_out"><i>p</i>-values</a> were calculated&mdash;1 for blaze rods, and 1 for ender pearls. The <i>p</i>-value is the probability that you would see results <i>at least</i> as extreme if some <a href="https://www.youtube.com/watch?v=bVMVGHkt2cg" target="_blank" id="yt_null_hypothesis_is_the_dull_hypothesis_out">&#8220;null hypothesis&#8221;</a> is true. In this case, the null hypothesis is the assumption that Dream <i>didn't</i> cheat.</p>
+
+<p> To combine these 2 <i>p</i>-values in each iteration, <a href="https://en.wikipedia.org/wiki/Fisher%27s_method" target="_blank" id="wiki_fishers_method_out">Fisher's Method</a> was used, which combines both null hypotheses and assumes they are independent, which would be true if Dream did not cheat.</p>
+
+<p> The above figures were made using simulations of
+<h1> Caveats </h1>
+
+<p> For short periods of time, one can get away with cheating. However, over a long period of time, it is possible one might get caught. There is a bit of difficulty, though, since the longer the period, the more difficult it is to compare and analyze data.</p>
+
+<p> That being said, one of the best ways to counteract and avoid cheating is by requiring &#8220;provers&#8221;. For example, streamers should show mod folders for runs (which Dream refused to do), or speedruns should be streamed live with video of the player along with the game screen.</p>
+
+<p> Also, the above models assumed the same behavior every game. This is less of an issue when more games are played, since the average values of number of ingot trades and blaze rods acquired grow closer to the &#8220;true average&#8221; as a result of the <a href="https://en.wikipedia.org/wiki/Law_of_large_numbers" id="wiki_law_of_large_numbers_out" target="_blank">Law of Large Numbers</a>.</p>
+
+
+<h1> Additional Figures </h1>
+
+<p> If a player decided to do 200 runs, with 100 being normal and 100 rigged, or 400 runs with 200 normal and 200 rigged, this is how likely they would be to evade detection for different probability combinations. Note that these are very high numbers of runs, corresponding to a few weeks of 8-hours-per-day speedrunning.</p>
+
+<!--begin.rcode cheat_evasion_p3_1, echo=FALSE, warning=FALSE, message=FALSE, fig.width=8, fig.height=8.5
+print(
+ggplot(pvals_w_normal_vlong) + 
+  geom_tile(aes(x=ender_pearl, y=blaze_rod, fill=undetected_rate)) + 
+  scale_fill_gradientn('Undetected Rate', colors=cetcolor::cet_pal(7, 'inferno') %>% rev(), label=scales::percent) + 
+  xlab('Ender Pearl Trade Probability') + 
+  ylab('Blaze Rod Drop Probability') +
+  scale_y_continuous(label=scales::percent, breaks = seq(0.5,0.75,0.05)) +
+  scale_x_continuous(label=scales::percent) +
+  ggtitle('Probability of evading cheat detection with \nmodified Minecraft probabilities', subtitle='200 games, 100 unmodified \n1000x speedrunner correction \np-val = 0.05\ngoal = 7 blaze rods, 15 pearl trade attempts') + 
+  theme_bw(base_size=15)
+  )
+end.rcode-->
+
+<p> When the number of attempts increases, keeping the ratio of attempt runs to number of rigged runs the same (2:1 in this case) narrows down the region of values that one can use.</p>
+
+<!--begin.rcode cheat_evasion_p3_2, echo=FALSE, warning=FALSE, message=FALSE, fig.width=8, fig.height=8.5
+print(
+ggplot(pvals_w_normal_vvlong) + 
+  geom_tile(aes(x=ender_pearl, y=blaze_rod, fill=undetected_rate)) + 
+  scale_fill_gradientn('Undetected Rate', colors=cetcolor::cet_pal(7, 'inferno') %>% rev(), label=scales::percent)  + 
+  xlab('Ender Pearl Trade Probability') + 
+  ylab('Blaze Rod Drop Probability') +
+  scale_y_continuous(label=scales::percent, breaks = seq(0.5,0.75,0.05)) +
+  scale_x_continuous(label=scales::percent) +
+  ggtitle('Probability of evading cheat detection with \nmodified Minecraft probabilities', subtitle='400 games, 200 unmodified \n1000x speedrunner correction \np-val = 0.05\ngoal = 7 blaze rods, 15 pearl trade attempts')+ 
+  theme_bw(base_size=15)
+  )
+end.rcode-->
+
+<h1> Source Code </h1>
+
+<p> This analysis was done in R, with the code being available here: <a href="https://github.com/mcandocia/dream_cheat" target="_blank" id="git_dream_cheat_out">https://github.com/mcandocia/dream_cheat</a>.</p>
